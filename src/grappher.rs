@@ -34,7 +34,7 @@ impl Point {
 				.map(input_min.x, input_max.x, output_min.x, output_max.x),
 			y: self
 				.y
-				.map(input_min.x, input_max.x, output_min.x, output_max.x),
+				.map(input_min.y, input_max.y, output_min.y, output_max.y),
 		}
 	}
 }

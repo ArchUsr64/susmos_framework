@@ -7,7 +7,7 @@ pub struct Plotter {
 	pub size_px: (usize, usize),
 	pub size_pt: Point,
 	pub centre: Point,
-	px_buffer: Vec<Vec<bool>>,
+	px_buffer: Vec<Vec<char>>,
 }
 
 impl Plotter {
@@ -16,7 +16,7 @@ impl Plotter {
 			size_px,
 			size_pt,
 			centre,
-			px_buffer: vec![vec![false; size_px.0]; size_px.1],
+			px_buffer: vec![vec![' '; size_px.0]; size_px.1],
 		}
 	}
 	fn get_point_corresponding_to_screen_corners(&self) -> (Point, Point) {
@@ -36,27 +36,34 @@ impl Plotter {
 				Point::new(self.size_px.0, self.size_px.1),
 			);
 			let screen_space_coordinate =
-				(point * Point::new(1, -1)).lerp(pt_min, pt_max, Point::new(0, 0), screen_max);
+				point.lerp(pt_min, pt_max, Point::new(0, 0), screen_max);
 			self.set_point_to_buffer(screen_space_coordinate);
 		}
 	}
 	fn set_point_to_buffer(&mut self, point: Point) {
 		let point = Point::new(point.x.round_i(), point.y.round_i());
+		println!("Point in screen : {}", point);
 		let point = (point.x as usize, point.y as usize);
 		if point.0 < self.size_px.0 && point.1 < self.size_px.1 {
-			self.px_buffer[point.1 as usize][point.0 as usize] = true;
+			self.px_buffer[point.1 as usize][point.0 as usize] = '*';
 		}
 	}
+	fn render_horizontal_border(&self) {
+		for i in 0..(self.size_px.0 + 2) {
+			print!("-");
+		}
+		println!();
+	}
 	pub fn render(&mut self) {
+		self.render_horizontal_border();
 		for i in self.px_buffer.iter() {
+			print!("|");
 			for j in i.iter() {
-				if *j {
-					print!("@")
-				} else {
-					print!(".")
-				}
+				print!("{}", j);
 			}
+			print!("|");
 			println!()
 		}
+		self.render_horizontal_border();
 	}
 }
