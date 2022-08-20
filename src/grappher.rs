@@ -1,5 +1,5 @@
 use std::fmt::Display;
-use std::ops::{Add, Div, Mul, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign};
 
 use crate::math::Math;
 use crate::traits::ToF32;
@@ -49,6 +49,25 @@ impl Mul<Point> for Point {
 	}
 }
 
+impl MulAssign<Point> for Point {
+	fn mul_assign(&mut self, rhs: Point) {
+		*self = Point {
+			x: self.x * rhs.x,
+			y: self.y * rhs.y,
+		};
+	}
+}
+
+impl Mul<f32> for Point {
+	type Output = Point;
+	fn mul(self, rhs: f32) -> Point {
+		Point {
+			x: self.x * rhs,
+			y: self.y * rhs,
+		}
+	}
+}
+
 impl Add<Point> for Point {
 	type Output = Point;
 	fn add(self, rhs: Point) -> Point {
@@ -83,5 +102,17 @@ impl SubAssign<Point> for Point {
 	fn sub_assign(&mut self, rhs: Point) {
 		self.x -= rhs.x;
 		self.y -= rhs.y;
+	}
+}
+impl MulAssign<f32> for Point {
+	fn mul_assign(&mut self, rhs: f32) {
+		self.x *= rhs;
+		self.y *= rhs;
+	}
+}
+impl AddAssign<Point> for Point {
+	fn add_assign(&mut self, rhs: Point) {
+		self.x += rhs.x;
+		self.y += rhs.y;
 	}
 }

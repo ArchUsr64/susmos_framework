@@ -27,6 +27,13 @@ impl Plotter {
 	fn centered_point_in_draw_area(&self, point: Point) -> bool {
 		self.size_pt.x.abs() > point.x.abs() || self.size_pt.y.abs() > point.y.abs()
 	}
+	pub fn clear(&mut self) {
+		for i in self.px_buffer.iter_mut() {
+			for j in i.iter_mut() {
+				*j = ' ';
+			}
+		}
+	}
 	pub fn plot(&mut self, point: Point) {
 		let mut point = point;
 		point -= self.centre;
@@ -35,33 +42,39 @@ impl Plotter {
 				self.get_point_corresponding_to_screen_corners(),
 				Point::new(self.size_px.0, self.size_px.1),
 			);
-			let screen_space_coordinate =
-				point.lerp(pt_min, pt_max, Point::new(0, 0), screen_max);
+			let screen_space_coordinate = point.lerp(pt_min, pt_max, Point::new(0, 0), screen_max);
 			self.set_point_to_buffer(screen_space_coordinate);
 		}
 	}
 	fn set_point_to_buffer(&mut self, point: Point) {
 		let point = Point::new(point.x.round_i(), point.y.round_i());
-		println!("Point in screen : {}", point);
 		let point = (point.x as usize, point.y as usize);
 		if point.0 < self.size_px.0 && point.1 < self.size_px.1 {
 			self.px_buffer[point.1 as usize][point.0 as usize] = '*';
 		}
 	}
 	fn render_horizontal_border(&self) {
-		for i in 0..(self.size_px.0 + 2) {
-			print!("-");
+		for _i in 0..self.size_px.0 {
+			print!("=");
 		}
 		println!();
 	}
 	pub fn render(&mut self) {
 		self.render_horizontal_border();
-		for i in self.px_buffer.iter() {
-			print!("|");
-			for j in i.iter() {
-				print!("{}", j);
+		for (m, i) in self.px_buffer.iter().enumerate() {
+			if m == 0 || m == self.size_px.1 - 1 {
+				continue;
 			}
-			print!("|");
+			for (i, val) in i.iter().enumerate() {
+				if i == self.size_px.0 - 1 {
+					print!("|");
+					continue;
+				}
+				match i {
+					0 => print!("|"),
+					_ => print!("{}", val),
+				}
+			}
 			println!()
 		}
 		self.render_horizontal_border();
