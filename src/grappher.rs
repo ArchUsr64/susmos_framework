@@ -2,6 +2,7 @@ use std::fmt::Display;
 use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign};
 
 use crate::math::Math;
+use crate::plotter::Pixel;
 use crate::traits::ToF32;
 
 #[derive(Clone, Copy)]
@@ -20,6 +21,15 @@ impl Point {
 			x: x.to_f32(),
 			y: y.to_f32(),
 		}
+	}
+	pub fn to_pixel(&self) -> Pixel {
+		Pixel::new(self.x.round_i(), self.y.round_i())
+	}
+	pub fn to_pixel_space(&self, size_px: Pixel, size_pt: Point, centre: Point) -> Pixel {
+		let low_bound = (centre - (size_pt / 2f32)) * Point::new(1f32, -1f32);
+		let high_bound = low_bound + (size_pt * Point::new(1, -1));
+		self.lerp(low_bound, high_bound, Point::new(0, 0), size_px.to_point())
+			.to_pixel()
 	}
 	pub fn lerp(
 		&self,
