@@ -47,11 +47,26 @@ impl Plotter {
 			px_buffer: vec![vec![' '; size_px.x]; size_px.y],
 		}
 	}
-	fn render_x_axis(&mut self) {
+	fn render_axis(&mut self) {
+		let aspect_ratio = self.size_pt.x / self.size_pt.y;
+		let label_count = Point::new(10f32 * aspect_ratio, 10f32);
+		let label_gap = (self.size_pt / label_count).goodify();
 		let origin = Point::new(0, 0).to_pixel_space(self.size_px, self.size_pt, self.centre);
+		let lowest_bound = self.centre - self.size_pt;
 		if origin.x < self.size_px.x && origin.x > 0 {
-			for i in 1..self.size_px.y {
+			for i in 0..self.size_px.y {
 				self.set_pixel_to_buffer(Pixel::new(origin.x, i), '|');
+			}
+			for i in 0..label_count.y.round_i() {
+				self.set_point_to_buffer(
+					Point::new(0f32, lowest_bound.y + ((i as f32) * label_gap.y)),
+					'k',
+				);
+			}
+		}
+		if origin.y < self.size_px.y && origin.y > 0 {
+			for i in 0..self.size_px.x {
+				self.set_pixel_to_buffer(Pixel::new(i, origin.y), '-');
 			}
 		}
 	}
@@ -74,6 +89,10 @@ impl Plotter {
 			self.px_buffer[pixel.y][pixel.x] = label;
 		}
 	}
+	fn set_point_to_buffer(&mut self, point: Point, label: char) {
+		let pixel = point.to_pixel_space(self.size_px, self.size_pt, self.centre);
+		self.set_pixel_to_buffer(pixel, label);
+	}
 	fn render_horizontal_border(&self) {
 		for _i in 0..self.size_px.x {
 			print!("=");
@@ -81,7 +100,7 @@ impl Plotter {
 		println!();
 	}
 	pub fn render(&mut self) {
-		self.render_x_axis();
+		self.render_axis();
 		self.render_horizontal_border();
 		for (m, i) in self.px_buffer.iter().enumerate() {
 			if m == 0 || m == self.size_px.y - 1 {

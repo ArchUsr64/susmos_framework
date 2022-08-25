@@ -25,6 +25,9 @@ impl Point {
 	pub fn to_pixel(&self) -> Pixel {
 		Pixel::new(self.x.round_i(), self.y.round_i())
 	}
+	pub fn goodify(&self) -> Point {
+		Point::new(self.x.goodify(), self.y.goodify())
+	}
 	pub fn to_pixel_space(&self, size_px: Pixel, size_pt: Point, centre: Point) -> Pixel {
 		let low_bound = (centre - (size_pt / 2f32)) * Point::new(1f32, -1f32);
 		let high_bound = low_bound + (size_pt * Point::new(1, -1));
@@ -88,6 +91,15 @@ impl Add<Point> for Point {
 	}
 }
 
+impl Div<Point> for Point {
+	type Output = Point;
+	fn div(self, rhs: Point) -> Point {
+		Point {
+			x: self.x / rhs.x,
+			y: self.y / rhs.y,
+		}
+	}
+}
 impl Div<f32> for Point {
 	type Output = Point;
 	fn div(self, rhs: f32) -> Point {

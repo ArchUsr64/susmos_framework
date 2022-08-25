@@ -38,7 +38,7 @@ fn main() {
 	let mut plotter = Plotter::new(full_screen_size, Point::new(2, 2), Point::new(0, 0));
 	let mut ball = Ball {
 		size: Point::new(0., 0.),
-		speed: 0.2,
+	speed: 0.2,
 		position: Point::new(0, 0),
 		velocity: Point::new(0.38, -0.21),
 	};
