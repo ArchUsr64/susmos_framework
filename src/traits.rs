@@ -21,3 +21,22 @@ impl ToF32 for i32 {
 		*self as f32
 	}
 }
+
+pub trait ToUsize {
+	fn to_usize(&self) -> usize;
+}
+impl ToUsize for usize {
+	fn to_usize(&self) -> usize {
+		*self
+	}
+}
+impl ToUsize for isize {
+	fn to_usize(&self) -> usize {
+		*self as usize
+	}
+}
+impl ToUsize for i32 {
+	fn to_usize(&self) -> usize {
+		*self as usize
+	}
+}

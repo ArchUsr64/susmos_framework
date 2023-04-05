@@ -16,8 +16,8 @@ impl Display for Pixel {
 impl Pixel {
 	pub fn new<T: ToUsize>(x: T, y: T) -> Pixel {
 		Pixel {
-			x: x.to_usize().unwrap_or(0),
-			y: y.to_usize().unwrap_or(0),
+			x: x.to_usize(),
+			y: y.to_usize(),
 		}
 	}
 	pub fn to_point(&self) -> Point {
@@ -50,7 +50,7 @@ impl Plotter {
 	fn render_axis(&mut self) {
 		let aspect_ratio = self.size_pt.x / self.size_pt.y;
 		let label_count = Point::new(10f32 * aspect_ratio, 10f32);
-		let label_gap = (self.size_pt / label_count).goodify();
+		let label_gap = (self.size_pt / label_count);
 		let origin = Point::new(0, 0).to_pixel_space(self.size_px, self.size_pt, self.centre);
 		let lowest_bound = self.centre - self.size_pt;
 		if origin.x < self.size_px.x && origin.x > 0 {

@@ -25,9 +25,6 @@ impl Point {
 	pub fn to_pixel(&self) -> Pixel {
 		Pixel::new(self.x.round_i(), self.y.round_i())
 	}
-	pub fn goodify(&self) -> Point {
-		Point::new(self.x.goodify(), self.y.goodify())
-	}
 	pub fn to_pixel_space(&self, size_px: Pixel, size_pt: Point, centre: Point) -> Pixel {
 		let low_bound = (centre - (size_pt / 2f32)) * Point::new(1f32, -1f32);
 		let high_bound = low_bound + (size_pt * Point::new(1, -1));
