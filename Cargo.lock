@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "pendulum_ode_solver"
+name = "susmos"
 version = "0.1.0"
