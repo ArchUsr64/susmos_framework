@@ -1,7 +1,17 @@
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Hash)]
 struct Graph {
 	vertex: Vec<char>,
 	edges: Vec<(usize, usize)>,
+}
+
+impl Graph {
+	fn seed(&self) -> u64 {
+		use std::collections::hash_map::DefaultHasher;
+		use std::hash::{Hash, Hasher};
+		let mut hasher = DefaultHasher::default();
+		self.hash(&mut hasher);
+		hasher.finish()
+	}
 }
 
 struct GraphBuilder {
@@ -30,7 +40,7 @@ impl GraphBuilder {
 				.vertex
 				.iter()
 				.enumerate()
-				.find(|(index, char)| **char == value)
+				.find(|(_, char)| **char == value)
 				.map(|(index, _)| index)
 				.unwrap()
 		};
