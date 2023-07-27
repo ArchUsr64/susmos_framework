@@ -4,6 +4,7 @@ use macroquad::prelude::*;
 struct Graph {
 	vertex: Vec<char>,
 	edges: Vec<(usize, usize)>,
+	weight_matrix: Vec<Vec<f32>>,
 	hash: u64,
 }
 
@@ -14,7 +15,7 @@ impl Graph {
 			self.hash ^= rand::gen_range(f64::MIN, f64::MAX).to_bits() ^ rand::rand() as u64;
 		}
 	}
-	fn render(&self) {
+	fn render(&mut self) {
 		let float_rand = || rand::gen_range(0f32, 1f32);
 		let line = |p1: (f32, f32), p2: (f32, f32)| {
 			draw_line(
@@ -29,7 +30,7 @@ impl Graph {
 		let circle = |p: (f32, f32), color| {
 			draw_circle(screen_width() * p.0, screen_height() * p.1, 50., color);
 		};
-		let character = |char, pos: (f32, f32)| {
+		let draw_character = |char, pos: (f32, f32)| {
 			draw_text(
 				format!("{char}").as_str(),
 				pos.0 * screen_width(),
@@ -60,8 +61,34 @@ impl Graph {
 			circle(*pos, color);
 		});
 		pos.iter().enumerate().for_each(|(index, pos)| {
-			character(self.vertex[index], *pos);
+			draw_character(self.vertex[index], *pos);
 		});
+		// for (i, row) in self.weight_matrix.iter_mut().enumerate() {
+		// 	let pos_1 = pos[i];
+		// 	for (j, weight) in row.iter_mut().enumerate() {
+		// 		let pos_2 = pos[j];
+		// 		*weight = if self.edges.contains(&(i, j)) || self.edges.contains(&(j, i)) {
+		// 			((pos_1.0 - pos_2.0).powi(2) + (pos_1.1 - pos_2.1).powi(2)).sqrt()
+		// 		} else {
+		// 			0f32
+		// 		};
+		// 	}
+		// }
+		self.edges.iter().for_each(|(point_1, point_2)| {
+			let pos_1 = pos[*point_1];
+			let pos_2 = pos[*point_2];
+			let weight = ((pos_1.0 - pos_2.0).powi(2) + (pos_1.1 - pos_2.1).powi(2)).sqrt();
+			self.weight_matrix[*point_1][*point_2] = weight;
+			self.weight_matrix[*point_2][*point_1] = weight;
+			let mid_point = ((pos_1.0 + pos_2.0) / 2f32, (pos_1.1 + pos_2.1) / 2f32);
+			draw_text(
+				format!("{:.2}", weight).as_str(),
+				mid_point.0 * screen_width(),
+				mid_point.1 * screen_height(),
+				30.,
+				WHITE,
+			)
+		})
 	}
 }
 
@@ -109,10 +136,12 @@ impl GraphBuilder {
 		let mut hasher = DefaultHasher::default();
 		self.hash(&mut hasher);
 		let hash = hasher.finish();
+		let vertex_count = self.vertex.len();
 		Graph {
 			vertex: self.vertex,
 			edges: self.edges,
 			hash,
+			weight_matrix: vec![vec![0f32; vertex_count]; vertex_count],
 		}
 	}
 }
@@ -133,7 +162,6 @@ async fn main() {
 		.add_edge('D', 'B')
 		.add_edge('F', 'C')
 		.build();
-	println!("{g:?}");
 	loop {
 		clear_background(BLACK);
 		g.update();
