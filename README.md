@@ -5,6 +5,6 @@ Wanted to create my own desmos like visualization environment for working with G
 - [X] Implement Dijkstra's shortest path algorithm
 - [ ] Enable placement of Vertices via mouse
 - [ ] API to change the visual properties of graph
-- [ ] Graph Traversal:
-  - [ ] DFS
-  - [ ] BFS 
+- [X] Graph Traversal:
+  - [X] DFS
+  - [X] BFS 

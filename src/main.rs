@@ -8,11 +8,69 @@ struct Graph {
 	hash: u64,
 }
 
+enum Traversal {
+	DepthFirst,
+	BreadthFirst,
+}
+
+/// TODO: Add support for custom starting vertex
+fn traverse(weight_matrix: Vec<Vec<f32>>, order: Traversal) -> Vec<usize> {
+	let vertex_count = weight_matrix.len();
+	let mut adjacency_matrix = vec![vec![false; vertex_count]; vertex_count];
+	let mut result = vec![];
+	for (i, row) in adjacency_matrix.iter_mut().enumerate() {
+		for (j, connected) in row.iter_mut().enumerate() {
+			*connected = weight_matrix[i][j] != 0f32;
+		}
+	}
+	let mut visiting_list = vec![0];
+	let mut visited = vec![false; vertex_count];
+	visited[0] = true;
+	loop {
+		if visiting_list.is_empty() {
+			break;
+		}
+		let visiting = match order {
+			Traversal::DepthFirst => visiting_list.pop().unwrap(),
+			Traversal::BreadthFirst => visiting_list.remove(0),
+		};
+		visited[visiting] = true;
+		result.push(visiting);
+		for (vertex_index, connected) in adjacency_matrix[visiting].iter().enumerate() {
+			if *connected && !visited[vertex_index] {
+				visiting_list.push(vertex_index);
+			}
+		}
+	}
+	result
+}
+
 impl Graph {
 	fn update(&mut self) {
 		rand::srand(self.hash);
 		if is_key_pressed(KeyCode::Space) {
 			self.hash ^= rand::gen_range(f64::MIN, f64::MAX).to_bits() ^ rand::rand() as u64;
+		}
+		let print_ordering = |name: &'static str, ordering: Vec<usize>| {
+			println!(
+				"{name} : {}",
+				ordering
+					.iter()
+					.map(|index| format!("{}->", self.vertex[*index]))
+					.collect::<String>()
+			);
+		};
+		if is_key_pressed(KeyCode::F1) {
+			print_ordering(
+				"BFS",
+				traverse(self.weight_matrix.clone(), Traversal::BreadthFirst),
+			);
+		}
+		if is_key_pressed(KeyCode::F2) {
+			print_ordering(
+				"DFS",
+				traverse(self.weight_matrix.clone(), Traversal::DepthFirst),
+			);
 		}
 		match get_char_pressed() {
 			Some(pressed_char) if self.vertex.contains(&pressed_char) => {
