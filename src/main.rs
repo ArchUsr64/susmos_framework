@@ -14,6 +14,9 @@ impl Graph {
 		if is_key_pressed(KeyCode::Space) {
 			self.hash ^= rand::gen_range(f64::MIN, f64::MAX).to_bits() ^ rand::rand() as u64;
 		}
+		if is_key_pressed(KeyCode::A) {
+			apply_dijkstra(self.weight_matrix.clone());
+		}
 	}
 	fn render(&mut self) {
 		let float_rand = || rand::gen_range(0f32, 1f32);
@@ -81,6 +84,64 @@ impl Graph {
 	}
 }
 
+fn apply_dijkstra(weight_matrix: Vec<Vec<f32>>) {
+	let vertex_count = weight_matrix.len();
+	let mut weight_matrix_rounded = vec![vec![0; vertex_count]; vertex_count];
+	(0..vertex_count).for_each(|i| {
+		(0..vertex_count)
+			.for_each(|j| weight_matrix_rounded[i][j] = (weight_matrix[i][j] * 100.) as usize)
+	});
+	let mut distances = vec![usize::MAX; vertex_count];
+	distances[0] = 0;
+	let mut from: Vec<Option<usize>> = vec![None; vertex_count];
+	from[0] = Some(0);
+	let mut visited = vec![false; vertex_count];
+	visited[0] = true;
+	for (dest_index, weight) in weight_matrix_rounded[0].iter().enumerate() {
+		if *weight != 0 {
+			distances[dest_index] = *weight;
+			from[dest_index] = Some(0);
+		}
+	}
+	loop {
+		let unvisited_count: usize = visited.iter().map(|i| if *i { 0 } else { 1 }).sum();
+		if unvisited_count == 0 {
+			break;
+		}
+		let mut unvisited_nodes = distances
+			.iter()
+			.enumerate()
+			.filter(|(node_index, _)| !visited[*node_index])
+			.map(|(i, j)| (i, *j))
+			.collect::<Vec<_>>();
+		unvisited_nodes.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+		let (next_visit_index, next_visit_distance) = unvisited_nodes[0];
+		println!("Next Visit: {next_visit_index}");
+		println!("Visited: {visited:?}");
+		drop(unvisited_nodes);
+		visited[next_visit_index] = true;
+		for (other_index, other_weight) in
+			weight_matrix_rounded[next_visit_index].iter().enumerate()
+		{
+			if *other_weight != 0 {
+				let distance_to_other_from_next_visit = next_visit_distance + other_weight;
+				if distance_to_other_from_next_visit < distances[other_index] {
+					distances[other_index] = distance_to_other_from_next_visit;
+					from[other_index] = Some(next_visit_index);
+				}
+			}
+		}
+	}
+	println!(
+		"{:#?}",
+		distances
+			.iter()
+			.zip(from.iter())
+			.map(|(i, j)| (*i, *j))
+			.collect::<Vec<(usize, Option<usize>)>>()
+	)
+}
+
 #[derive(Hash)]
 struct GraphBuilder {
 	vertex: Vec<char>,
@@ -145,7 +206,6 @@ async fn main() {
 		.add_vertex('E')
 		.add_vertex('F')
 		.add_edge('A', 'B')
-		.add_edge('C', 'B')
 		.add_edge('E', 'A')
 		.add_edge('E', 'C')
 		.add_edge('D', 'B')
