@@ -15,7 +15,7 @@ impl Graph {
 			self.hash ^= rand::gen_range(f64::MIN, f64::MAX).to_bits() ^ rand::rand() as u64;
 		}
 		if is_key_pressed(KeyCode::A) {
-			apply_dijkstra(0, self.weight_matrix.clone());
+			println!("{:#.2?}", apply_dijkstra(0, self.weight_matrix.clone()));
 		}
 	}
 	fn render(&mut self) {
@@ -84,7 +84,7 @@ impl Graph {
 	}
 }
 
-fn apply_dijkstra(start_index: usize, weight_matrix: Vec<Vec<f32>>) {
+fn apply_dijkstra(start_index: usize, weight_matrix: Vec<Vec<f32>>) -> Vec<(f32, Option<usize>)> {
 	let vertex_count = weight_matrix.len();
 	let mut distances = vec![f32::INFINITY; vertex_count];
 	distances[start_index] = 0f32;
@@ -111,8 +111,6 @@ fn apply_dijkstra(start_index: usize, weight_matrix: Vec<Vec<f32>>) {
 			.collect::<Vec<_>>();
 		unvisited_nodes.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
 		let (next_visit_index, next_visit_distance) = unvisited_nodes[0];
-		println!("Next Visit: {next_visit_index}");
-		println!("Visited: {visited:?}");
 		visited[next_visit_index] = true;
 		for (other_index, other_weight) in weight_matrix[next_visit_index].iter().enumerate() {
 			if *other_weight != 0f32 {
@@ -124,14 +122,11 @@ fn apply_dijkstra(start_index: usize, weight_matrix: Vec<Vec<f32>>) {
 			}
 		}
 	}
-	println!(
-		"{:#.2?}",
-		distances
-			.iter()
-			.zip(from.iter())
-			.map(|(i, j)| (*i, *j))
-			.collect::<Vec<(f32, Option<usize>)>>()
-	)
+	distances
+		.iter()
+		.zip(from.iter())
+		.map(|(i, j)| (*i, *j))
+		.collect::<Vec<(f32, Option<usize>)>>()
 }
 
 #[derive(Hash)]
