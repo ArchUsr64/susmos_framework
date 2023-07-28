@@ -1,22 +1,4 @@
 use macroquad::prelude::*;
-use std::cmp::Ord;
-
-///! Probably the shittiest implementation of a priority queue ever written
-struct PriorityQueue<T: Ord> {
-	vec: Vec<T>,
-}
-impl<T: Ord> PriorityQueue<T> {
-	fn new() -> Self {
-		Self { vec: Vec::new() }
-	}
-	fn enqueue(&mut self, node: T) {
-		self.vec.push(node);
-		self.vec.sort();
-	}
-	fn dequeue(&mut self) -> Option<T> {
-		self.vec.pop()
-	}
-}
 
 #[derive(Clone, Debug)]
 struct Graph {
