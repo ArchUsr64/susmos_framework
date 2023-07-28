@@ -1,4 +1,22 @@
 use macroquad::prelude::*;
+use std::cmp::Ord;
+
+///! Probably the shittiest implementation of a priority queue ever written
+struct PriorityQueue<T: Ord> {
+	vec: Vec<T>,
+}
+impl<T: Ord> PriorityQueue<T> {
+	fn new() -> Self {
+		Self { vec: Vec::new() }
+	}
+	fn enqueue(&mut self, node: T) {
+		self.vec.push(node);
+		self.vec.sort();
+	}
+	fn dequeue(&mut self) -> Option<T> {
+		self.vec.pop()
+	}
+}
 
 #[derive(Clone, Debug)]
 struct Graph {
@@ -63,17 +81,6 @@ impl Graph {
 		pos.iter().enumerate().for_each(|(index, pos)| {
 			draw_character(self.vertex[index], *pos);
 		});
-		// for (i, row) in self.weight_matrix.iter_mut().enumerate() {
-		// 	let pos_1 = pos[i];
-		// 	for (j, weight) in row.iter_mut().enumerate() {
-		// 		let pos_2 = pos[j];
-		// 		*weight = if self.edges.contains(&(i, j)) || self.edges.contains(&(j, i)) {
-		// 			((pos_1.0 - pos_2.0).powi(2) + (pos_1.1 - pos_2.1).powi(2)).sqrt()
-		// 		} else {
-		// 			0f32
-		// 		};
-		// 	}
-		// }
 		self.edges.iter().for_each(|(point_1, point_2)| {
 			let pos_1 = pos[*point_1];
 			let pos_2 = pos[*point_2];
