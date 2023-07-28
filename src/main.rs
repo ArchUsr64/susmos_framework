@@ -1,94 +1,178 @@
-use miniquad as mq;
+use macroquad::prelude::*;
+use std::cmp::Ord;
 
-struct App {
-	egui_mq: egui_miniquad::EguiMq,
-	color: egui::Rgba,
+///! Probably the shittiest implementation of a priority queue ever written
+struct PriorityQueue<T: Ord> {
+	vec: Vec<T>,
+}
+impl<T: Ord> PriorityQueue<T> {
+	fn new() -> Self {
+		Self { vec: Vec::new() }
+	}
+	fn enqueue(&mut self, node: T) {
+		self.vec.push(node);
+		self.vec.sort();
+	}
+	fn dequeue(&mut self) -> Option<T> {
+		self.vec.pop()
+	}
 }
 
-impl App {
-	fn new(ctx: &mut mq::Context) -> Self {
+#[derive(Clone, Debug)]
+struct Graph {
+	vertex: Vec<char>,
+	edges: Vec<(usize, usize)>,
+	weight_matrix: Vec<Vec<f32>>,
+	hash: u64,
+}
+
+impl Graph {
+	fn update(&mut self) {
+		rand::srand(self.hash);
+		if is_key_pressed(KeyCode::Space) {
+			self.hash ^= rand::gen_range(f64::MIN, f64::MAX).to_bits() ^ rand::rand() as u64;
+		}
+	}
+	fn render(&mut self) {
+		let float_rand = || rand::gen_range(0f32, 1f32);
+		let line = |p1: (f32, f32), p2: (f32, f32)| {
+			draw_line(
+				screen_width() * p1.0,
+				screen_height() * p1.1,
+				screen_width() * p2.0,
+				screen_height() * p2.1,
+				1.,
+				WHITE,
+			);
+		};
+		let circle = |p: (f32, f32), color| {
+			draw_circle(screen_width() * p.0, screen_height() * p.1, 50., color);
+		};
+		let draw_character = |char, pos: (f32, f32)| {
+			draw_text(
+				format!("{char}").as_str(),
+				pos.0 * screen_width(),
+				pos.1 * screen_height(),
+				30.,
+				WHITE,
+			)
+		};
+		let pos = self
+			.vertex
+			.iter()
+			.map(|_| (float_rand(), float_rand()))
+			.collect::<Vec<_>>();
+		let color = self
+			.vertex
+			.iter()
+			.map(|_| Color {
+				r: float_rand(),
+				g: float_rand(),
+				b: float_rand(),
+				a: 1.,
+			})
+			.collect::<Vec<_>>();
+		self.edges
+			.iter()
+			.for_each(|vert_index| line(pos[vert_index.0], pos[vert_index.1]));
+		pos.iter().zip(color).for_each(|(pos, color)| {
+			circle(*pos, color);
+		});
+		pos.iter().enumerate().for_each(|(index, pos)| {
+			draw_character(self.vertex[index], *pos);
+		});
+		self.edges.iter().for_each(|(point_1, point_2)| {
+			let pos_1 = pos[*point_1];
+			let pos_2 = pos[*point_2];
+			let weight = ((pos_1.0 - pos_2.0).powi(2) + (pos_1.1 - pos_2.1).powi(2)).sqrt();
+			self.weight_matrix[*point_1][*point_2] = weight;
+			self.weight_matrix[*point_2][*point_1] = weight;
+			let mid_point = ((pos_1.0 + pos_2.0) / 2f32, (pos_1.1 + pos_2.1) / 2f32);
+			draw_text(
+				format!("{:.2}", weight).as_str(),
+				mid_point.0 * screen_width(),
+				mid_point.1 * screen_height(),
+				30.,
+				WHITE,
+			)
+		})
+	}
+}
+
+#[derive(Hash)]
+struct GraphBuilder {
+	vertex: Vec<char>,
+	edges: Vec<(usize, usize)>,
+}
+impl GraphBuilder {
+	pub fn new() -> Self {
 		Self {
-			egui_mq: egui_miniquad::EguiMq::new(ctx),
-			color: egui::Rgba::RED,
+			vertex: Vec::new(),
+			edges: Vec::new(),
+		}
+	}
+	pub fn add_vertex(mut self, value: char) -> Self {
+		if !self.vertex.contains(&value) {
+			self.vertex.push(value);
+		}
+		self
+	}
+	pub fn add_edge(mut self, value1: char, value2: char) -> Self {
+		self = self.add_vertex(value1);
+		self = self.add_vertex(value2);
+		let find_index = |value| {
+			self.vertex
+				.iter()
+				.enumerate()
+				.find(|(_, char)| **char == value)
+				.map(|(index, _)| index)
+				.unwrap()
+		};
+		let index1 = find_index(value1);
+		let index2 = find_index(value2);
+		println!("{index1}, {index2}");
+		if !(self.edges.contains(&(index1, index2)) || self.edges.contains(&(index2, index1))) {
+			println!("Added: {value1}, {value2}");
+			self.edges.push((index1, index2))
+		}
+		self
+	}
+	pub fn build(self) -> Graph {
+		use std::collections::hash_map::DefaultHasher;
+		use std::hash::{Hash, Hasher};
+		let mut hasher = DefaultHasher::default();
+		self.hash(&mut hasher);
+		let hash = hasher.finish();
+		let vertex_count = self.vertex.len();
+		Graph {
+			vertex: self.vertex,
+			edges: self.edges,
+			hash,
+			weight_matrix: vec![vec![0f32; vertex_count]; vertex_count],
 		}
 	}
 }
 
-impl mq::EventHandler for App {
-	fn update(&mut self, _: &mut mq::Context) {}
-	fn draw(&mut self, mq_ctx: &mut mq::Context) {
-		mq_ctx.clear(Some((1., 1., 1., 1.)), None, None);
-		mq_ctx.begin_default_pass(mq::PassAction::clear_color(
-			self.color.r(),
-			self.color.g(),
-			self.color.b(),
-			self.color.a(),
-		));
-		mq_ctx.end_render_pass();
-
-		self.egui_mq.run(mq_ctx, |_mq_ctx, egui_ctx| {
-			egui_ctx.set_visuals(egui::Visuals::light());
-			egui::Window::new("Egui Window")
-				.show(egui_ctx, |ui| {
-					egui::color_picker::color_edit_button_rgba(
-						ui,
-						&mut self.color,
-						egui::color_picker::Alpha::Opaque,
-					);
-				})
-				.unwrap();
-		});
-
-		self.egui_mq.draw(mq_ctx);
-		mq_ctx.commit_frame();
+#[macroquad::main("susmos")]
+async fn main() {
+	let mut g = GraphBuilder::new()
+		.add_vertex('A')
+		.add_vertex('B')
+		.add_vertex('C')
+		.add_vertex('D')
+		.add_vertex('E')
+		.add_vertex('F')
+		.add_edge('A', 'B')
+		.add_edge('C', 'B')
+		.add_edge('E', 'A')
+		.add_edge('E', 'C')
+		.add_edge('D', 'B')
+		.add_edge('F', 'C')
+		.build();
+	loop {
+		clear_background(BLACK);
+		g.update();
+		g.render();
+		next_frame().await
 	}
-	fn mouse_motion_event(&mut self, _: &mut mq::Context, x: f32, y: f32) {
-		self.egui_mq.mouse_motion_event(x, y);
-	}
-	fn mouse_wheel_event(&mut self, _: &mut mq::Context, dx: f32, dy: f32) {
-		self.egui_mq.mouse_wheel_event(dx, dy);
-	}
-	fn mouse_button_down_event(
-		&mut self,
-		ctx: &mut mq::Context,
-		mb: mq::MouseButton,
-		x: f32,
-		y: f32,
-	) {
-		self.egui_mq.mouse_button_down_event(ctx, mb, x, y);
-	}
-	fn mouse_button_up_event(
-		&mut self,
-		ctx: &mut mq::Context,
-		mb: mq::MouseButton,
-		x: f32,
-		y: f32,
-	) {
-		self.egui_mq.mouse_button_up_event(ctx, mb, x, y);
-	}
-	fn char_event(
-		&mut self,
-		_ctx: &mut mq::Context,
-		character: char,
-		_keymods: mq::KeyMods,
-		_repeat: bool,
-	) {
-		self.egui_mq.char_event(character);
-	}
-	fn key_down_event(
-		&mut self,
-		ctx: &mut mq::Context,
-		keycode: mq::KeyCode,
-		keymods: mq::KeyMods,
-		_repeat: bool,
-	) {
-		self.egui_mq.key_down_event(ctx, keycode, keymods);
-	}
-	fn key_up_event(&mut self, _ctx: &mut mq::Context, keycode: mq::KeyCode, keymods: mq::KeyMods) {
-		self.egui_mq.key_up_event(keycode, keymods);
-	}
-}
-
-fn main() {
-	mq::start(mq::conf::Conf::default(), |ctx| Box::new(App::new(ctx)))
 }
