@@ -14,8 +14,34 @@ impl Graph {
 		if is_key_pressed(KeyCode::Space) {
 			self.hash ^= rand::gen_range(f64::MIN, f64::MAX).to_bits() ^ rand::rand() as u64;
 		}
-		if is_key_pressed(KeyCode::A) {
-			println!("{:#.2?}", apply_dijkstra(0, self.weight_matrix.clone()));
+		match get_char_pressed() {
+			Some(pressed_char) if self.vertex.contains(&pressed_char) => {
+				let (vertex_index, vertex_char_code) = self
+					.vertex
+					.iter()
+					.enumerate()
+					.find(|(_, vertex_char)| **vertex_char == pressed_char)
+					.unwrap();
+				// TODO: Remove the need for this clone
+				let dijkstra_result = apply_dijkstra(vertex_index, self.weight_matrix.clone());
+				println!("Start vertex: {vertex_char_code}");
+				println!("Destination\tDistance\tPrevious Vertex");
+				for (destination_vertex_index, (distance, previous_vertex)) in
+					dijkstra_result.iter().enumerate()
+				{
+					println!(
+						"{}\t\t{:.2}\t\t{}",
+						self.vertex[destination_vertex_index],
+						distance,
+						match previous_vertex {
+							Some(index) => String::from(self.vertex[*index]),
+							None => String::from("No Path"),
+						}
+					)
+				}
+				println!();
+			}
+			_ => (),
 		}
 	}
 	fn render(&mut self) {
