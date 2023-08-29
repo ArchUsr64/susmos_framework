@@ -72,6 +72,9 @@ impl Graph {
 				traverse(self.weight_matrix.clone(), Traversal::DepthFirst),
 			);
 		}
+		if is_key_pressed(KeyCode::Tab) {
+			apply_bellman_ford(self.weight_matrix.clone());
+		}
 		match get_char_pressed() {
 			Some(pressed_char) if self.vertex.contains(&pressed_char) => {
 				let (vertex_index, vertex_char_code) = self
@@ -166,6 +169,27 @@ impl Graph {
 			)
 		})
 	}
+}
+
+fn apply_bellman_ford(weight_matrix: Vec<Vec<f32>>) {
+	let mut weight_matrix = weight_matrix.clone();
+	for (i, row) in weight_matrix.iter_mut().enumerate() {
+		for (j, edge) in row.iter_mut().enumerate() {
+			if i != j && *edge == 0f32 {
+				*edge = f32::MAX;
+			}
+		}
+	}
+	let vertex_count = weight_matrix.len();
+	(0..vertex_count).for_each(|k| {
+		(0..vertex_count).for_each(|i| {
+			(0..vertex_count).for_each(|j| {
+				weight_matrix[i][j] =
+					weight_matrix[i][j].min(weight_matrix[i][k] + weight_matrix[k][j])
+			})
+		})
+	});
+	println!("{weight_matrix:#.2?}");
 }
 
 fn apply_dijkstra(start_index: usize, weight_matrix: Vec<Vec<f32>>) -> Vec<(f32, Option<usize>)> {
