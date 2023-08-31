@@ -1,10 +1,7 @@
-use macroquad::prelude::*;
+mod view;
+use view::*;
 
-trait ScreenObject {
-	fn update(&mut self);
-	fn render(&self);
-	fn clicked(&self) -> Option<MouseButton>;
-}
+use macroquad::prelude::*;
 
 #[derive(Clone, Copy, Debug)]
 struct Vertex {
@@ -14,28 +11,10 @@ struct Vertex {
 	radius: f32,
 }
 
-impl ScreenObject for Vertex {
-	fn update(&mut self) {
-		if let Some(MouseButton::Middle) = self.clicked() {
-			self.position = Vec2::new(mouse_position().0, mouse_position().1);
-		}
-	}
+impl ViewObject for Vertex {
+	fn update(&mut self) {}
 	fn render(&self) {
-		draw_circle(
-			self.position.x,
-			self.position.y,
-			self.radius,
-			if self.clicked().is_some() {
-				Color {
-					r: self.color.r * 1.5,
-					g: self.color.g * 1.5,
-					b: self.color.b * 1.5,
-					a: self.color.a * 1.5,
-				}
-			} else {
-				self.color
-			},
-		);
+		draw_circle(self.position.x, self.position.y, self.radius, self.color);
 		draw_text(
 			format!("{}", self.name).as_str(),
 			self.position.x,
@@ -44,38 +23,37 @@ impl ScreenObject for Vertex {
 			YELLOW,
 		);
 	}
-	fn clicked(&self) -> Option<MouseButton> {
-		let cursor_position = mouse_position();
-		let cursor_inside = ((cursor_position.0 - self.position.x).powi(2)
-			+ (cursor_position.1 - self.position.y).powi(2))
-			< self.radius * self.radius;
-		if !cursor_inside {
-			return None;
+	fn clicked(&mut self, button: MouseButton) {
+		self.color = match button {
+			MouseButton::Right => YELLOW,
+			MouseButton::Left => ORANGE,
+			MouseButton::Middle => BLUE,
+			MouseButton::Unknown => RED,
 		}
-		let check_if_pressed = |button| {
-			if is_mouse_button_down(button) {
-				Some(button)
-			} else {
-				None
-			}
-		};
-		check_if_pressed(MouseButton::Left).or(check_if_pressed(MouseButton::Right)
-			.or(check_if_pressed(MouseButton::Middle).or(check_if_pressed(MouseButton::Unknown))))
+	}
+	fn hover(&mut self) {
+		self.color = GRAY;
+	}
+	fn collision_box(&self, mouse_position_normalized: Vec2) -> bool {
+		let vec = self.position - mouse_position_normalized;
+		vec.x * vec.x + vec.y * vec.y <= self.radius * self.radius
+	}
+
+	fn released(&mut self) {
+		self.color = MAGENTA;
 	}
 }
 
 #[macroquad::main("susmos")]
 async fn main() {
-	let mut vertex = Vertex {
+	let vertex = Vertex {
 		name: 'A',
 		color: Color::from_rgba(28, 100, 255, 255),
 		position: Vec2::new(500., 500.),
 		radius: 200.,
 	};
-	loop {
-		clear_background(BLACK);
-		vertex.update();
-		vertex.render();
-		next_frame().await
-	}
+	let mut view = Viewport {
+		renderables: vec![vertex],
+	};
+	view.run().await;
 }
