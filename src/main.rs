@@ -1,6 +1,7 @@
 use macroquad::prelude::*;
 
 trait ScreenObject {
+	fn update(&mut self);
 	fn render(&self);
 	fn clicked(&self) -> Option<MouseButton>;
 }
@@ -14,6 +15,11 @@ struct Vertex {
 }
 
 impl ScreenObject for Vertex {
+	fn update(&mut self) {
+		if let Some(MouseButton::Middle) = self.clicked() {
+			self.position = Vec2::new(mouse_position().0, mouse_position().1);
+		}
+	}
 	fn render(&self) {
 		draw_circle(
 			self.position.x,
@@ -60,7 +66,7 @@ impl ScreenObject for Vertex {
 
 #[macroquad::main("susmos")]
 async fn main() {
-	let vertex = Vertex {
+	let mut vertex = Vertex {
 		name: 'A',
 		color: Color::from_rgba(28, 100, 255, 255),
 		position: Vec2::new(500., 500.),
@@ -68,6 +74,7 @@ async fn main() {
 	};
 	loop {
 		clear_background(BLACK);
+		vertex.update();
 		vertex.render();
 		next_frame().await
 	}
