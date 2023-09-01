@@ -13,15 +13,14 @@ struct Vertex {
 
 impl ViewObject for Vertex {
 	fn update(&mut self) {}
-	fn render(&self) {
-		draw_circle(self.position.x, self.position.y, self.radius, self.color);
-		draw_text(
-			format!("{}", self.name).as_str(),
-			self.position.x,
-			self.position.y,
-			20.,
-			YELLOW,
-		);
+	fn render(&self) -> RenderCall {
+		RenderCall {
+			shape: Shape::Circle {
+				position: self.position,
+			},
+			size: self.radius,
+			color: self.color,
+		}
 	}
 	fn clicked(&mut self, button: MouseButton) {
 		self.color = match button {
@@ -49,10 +48,14 @@ async fn main() {
 	let vertex = Vertex {
 		name: 'A',
 		color: Color::from_rgba(28, 100, 255, 255),
-		position: Vec2::new(500., 500.),
-		radius: 200.,
+		position: Vec2::new(0., 0.),
+		radius: 25.2,
 	};
 	let mut view = Viewport {
+		camera: view::Camera {
+			position: Vec2::splat(0.),
+			zoom: 1.,
+		},
 		renderables: vec![vertex],
 	};
 	view.run().await;
